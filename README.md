@@ -34,4 +34,10 @@ El script imprime `legibility.ok` por cada propuesta.
 python3 upload.py --file out/november_c0.jpg --playlist <id> --creds-from /tmp/sync.py
 ```
 
+Título del mes (`YOU CAN'T MISS "NOVEMBER" - javdomvid`, con el mes según la hora de Madrid):
+
+```bash
+python3 upload.py --playlist <id> --creds-from /tmp/sync.py --set-title
+```
+
 Necesita un refresh token con el permiso `ugc-image-upload`. Las credenciales nunca van en este repo. Las lee de variables de entorno (`SPOTIFY_CID`, `SPOTIFY_CSEC`, `SPOTIFY_RTOK`) o de un script con líneas `CID="…"`, `CSEC="…"` y `RTOK="…"`.

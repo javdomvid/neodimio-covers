@@ -41,10 +41,33 @@ def token(path=None):
         raise RuntimeError("SCOPE: el token no tiene ugc-image-upload; hay que reautorizar la app")
     return t["access_token"]
 
+MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST",
+          "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
+TITLE = 'YOU CAN\'T MISS "{month}" - javdomvid'
+
+def set_title(playlist, H, month="auto"):
+    """Pone el titulo del mes (hora de Madrid) y verifica que quedo guardado."""
+    import datetime, zoneinfo
+    if month == "auto":
+        month = MONTHS[datetime.datetime.now(zoneinfo.ZoneInfo("Europe/Madrid")).month - 1]
+    name = TITLE.format(month=month.upper())
+    url = f"https://api.spotify.com/v1/playlists/{playlist}"
+    _, old = call(url + "?fields=name", hdr=H)
+    st, _ = call(url, "PUT", json.dumps({"name": name}).encode(), dict(H, **{"Content-Type": "application/json"}))
+    _, new = call(url + "?fields=name", hdr=H)
+    return {"titulo_antes": old.get("name"), "titulo": new.get("name"), "status": st, "ok": new.get("name") == name}
+
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(); ap.add_argument("--file", required=True); ap.add_argument("--playlist", required=True)
+    ap = argparse.ArgumentParser(); ap.add_argument("--file"); ap.add_argument("--playlist", required=True)
     ap.add_argument("--creds-from", default=None)
+    ap.add_argument("--set-title", action="store_true", help='titulo: YOU CAN\'T MISS "MES" - javdomvid')
+    ap.add_argument("--month", default="auto")
     a = ap.parse_args()
+    if a.set_title:
+        H = {"Authorization": "Bearer " + token(a.creds_from)}
+        r = set_title(a.playlist, H, a.month); print(json.dumps(r, ensure_ascii=False))
+        if not a.file: sys.exit(0 if r["ok"] else 1)
+    if not a.file: sys.exit("Falta --file (o usa --set-title)")
     body = base64.b64encode(open(a.file, "rb").read())
     if len(body) > 256 * 1024: sys.exit("La imagen supera 256 KB en base64")
     H = {"Authorization": "Bearer " + token(a.creds_from)}
